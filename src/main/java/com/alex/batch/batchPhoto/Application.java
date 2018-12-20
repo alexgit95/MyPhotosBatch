@@ -53,7 +53,7 @@ public class Application implements CommandLineRunner {
 			//
 			//return;
 		}
-		//repository.deleteAll();
+		repository.deleteAll();
 		
 		
 		
@@ -167,14 +167,14 @@ public class Application implements CommandLineRunner {
 		long previousTime = System.currentTimeMillis();
 		for (int i=0;i<filteredFiles.size();i++) {
 			try {
-				if(i%100==0){
+				if(i%100==0&&i>0){
 					long currentTimeMillis = System.currentTimeMillis();
 					long duree=currentTimeMillis-previousTime;
 					previousTime=currentTimeMillis;
-					duree*=1000;
+					duree/=1000;
 					
-					int nbUnite=filteredFiles.size()/i;
-					long dureeenSeconde=duree*nbUnite;
+					int nbUniteRestante=(filteredFiles.size()-i)/100;
+					long dureeenSeconde=duree*nbUniteRestante;
 					long durees=dureeenSeconde%60;
 					long dureem=dureeenSeconde/60;
 					System.out.println(i+"/"+filteredFiles.size()+" restant "+dureem+":"+durees);
@@ -256,9 +256,6 @@ public class Application implements CommandLineRunner {
 				result.add(photos);
 			}
 		}
-		
-		
-
 		return result;
 	}
 	
@@ -278,39 +275,34 @@ public class Application implements CommandLineRunner {
 				result.add(photos);
 			} else {
 				// On va chercher sur google
-				System.out.println("On va chercher l'information sur google....");
+				System.out.println("On va chercher l'information sur opencagedata....");
 				try{
-				CloseableHttpClient httpclient = HttpClients.createDefault();
-				String url = "https://api.opencagedata.com/geocode/v1/json?q="+photos.lattitude+","+photos.longitude+"&key=6a61f452b3fd4604a25ea07e18a900f4&language=fr&pretty=1";
-				HttpGet httpGet = new HttpGet(url);
-				System.out.println(url);
-				ResponseHandler<String> handler = new BasicResponseHandler();
-				HttpResponse response = httpclient.execute(httpGet);
-				String body = handler.handleResponse(response);
-				System.out.println(body);
-				Gson gson = new Gson();
-				ReponseGeocoding fromJson = gson.fromJson(body, ReponseGeocoding.class);
-				String city=null;
-				String region=null;
-				String pays=null;
-				
-				if(fromJson.getResults().get(0).getComponents().getCountry()!=null&&fromJson.getResults().get(0).getComponents().getCity()!=null){
-					photos.ville = fromJson.getResults().get(0).getComponents().getCity();
-				}else if(fromJson.getResults().get(0).getComponents().getCountry()!=null&&fromJson.getResults().get(0).getComponents().getVillage()!=null){
-					photos.ville = fromJson.getResults().get(0).getComponents().getVillage();
-				}else if(fromJson.getResults().get(0).getComponents().getCountry()!=null&&fromJson.getResults().get(0).getComponents().getTown()!=null){
-					photos.ville = fromJson.getResults().get(0).getComponents().getTown();
-				}
-				
-				if(photos.ville==null){
-					System.exit(0);
-				}
-				
-				photos.pays = fromJson.getResults().get(0).getComponents().getCountry();
-				
-				photos.region = fromJson.getResults().get(0).getComponents().getState();
-				System.out.println("On a trouve : "+photos.ville+", "+photos.region+", "+photos.pays);
-				result.add(photos);
+					CloseableHttpClient httpclient = HttpClients.createDefault();
+					String url = "https://api.opencagedata.com/geocode/v1/json?q="+photos.lattitude+","+photos.longitude+"&key=6a61f452b3fd4604a25ea07e18a900f4&language=fr&pretty=1";
+					HttpGet httpGet = new HttpGet(url);
+					//System.out.println(url);
+					ResponseHandler<String> handler = new BasicResponseHandler();
+					HttpResponse response = httpclient.execute(httpGet);
+					String body = handler.handleResponse(response);
+					//System.out.println(body);
+					Gson gson = new Gson();
+					ReponseGeocoding fromJson = gson.fromJson(body, ReponseGeocoding.class);
+					
+					
+					if(fromJson.getResults().get(0).getComponents().getCountry()!=null&&fromJson.getResults().get(0).getComponents().getCity()!=null){
+						photos.ville = fromJson.getResults().get(0).getComponents().getCity();
+					}else if(fromJson.getResults().get(0).getComponents().getCountry()!=null&&fromJson.getResults().get(0).getComponents().getVillage()!=null){
+						photos.ville = fromJson.getResults().get(0).getComponents().getVillage();
+					}else if(fromJson.getResults().get(0).getComponents().getCountry()!=null&&fromJson.getResults().get(0).getComponents().getTown()!=null){
+						photos.ville = fromJson.getResults().get(0).getComponents().getTown();
+					}
+					
+					
+					photos.pays = fromJson.getResults().get(0).getComponents().getCountry();
+					
+					photos.region = fromJson.getResults().get(0).getComponents().getState();
+					System.out.println("On a trouve : "+photos.ville+", "+photos.region+", "+photos.pays);
+					result.add(photos);
 				}catch(Exception e){
 					e.printStackTrace();
 				}
