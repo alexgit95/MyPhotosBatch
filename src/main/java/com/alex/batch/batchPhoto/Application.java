@@ -53,7 +53,7 @@ public class Application implements CommandLineRunner {
 			//
 			//return;
 		}
-		repository.deleteAll();
+		//repository.deleteAll();
 		
 		
 		
@@ -149,7 +149,9 @@ public class Application implements CommandLineRunner {
 		List<File> result = new ArrayList<>();
 		for (File file : allFiles) {
 			//System.out.println("On test "+file.getName());
-			Photos findByNom = repository.findByNom(file.getName());
+			
+			//Photos findByNom = repository.findByNom(file.getName());
+			Photos findByNom = repositoryCustom.findOnePhotosByNom(file.getName());
 			if(findByNom==null) {
 				//System.out.println("On ajoute "+file.getName());
 				result.add(file);

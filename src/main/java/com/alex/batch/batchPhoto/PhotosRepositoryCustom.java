@@ -22,4 +22,6 @@ public interface PhotosRepositoryCustom  {
 	 * @return
 	 */
 	Photos getNearestPhotoWithGeocoding(Photos p, int pas);
+	
+	Photos findOnePhotosByNom(String nom);
 }

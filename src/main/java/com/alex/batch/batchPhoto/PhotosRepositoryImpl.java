@@ -115,6 +115,13 @@ public class PhotosRepositoryImpl implements PhotosRepositoryCustom {
 	
 	}
 
+	@Override
+	public Photos findOnePhotosByNom(String nom) {
+		Query query = new Query(Criteria.where("nom").is(nom));
+		List<Photos> find = mongoTemplate.find(query, Photos.class);
+		return find.get(0);
+	}
+
 	
 
 }
