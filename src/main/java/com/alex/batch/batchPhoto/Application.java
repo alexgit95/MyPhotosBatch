@@ -14,6 +14,7 @@ import main.java.com.alex.batch.batchPhoto.model.ReponseGeocoding;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.BasicResponseHandler;
@@ -54,7 +55,6 @@ public class Application implements CommandLineRunner {
 			//return;
 		}
 		//repository.deleteAll();
-		
 		
 		
 		
@@ -238,6 +238,8 @@ public class Application implements CommandLineRunner {
 		try {
 			return sdf.parse(fichier.getName());
 		} catch (ParseException e) {
+			
+			System.out.println("Impossible de parser :"+fichier.getName());
 			//e.printStackTrace();
 			return null;
 		}

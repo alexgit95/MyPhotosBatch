@@ -54,7 +54,7 @@ public class PhotosRepositoryImpl implements PhotosRepositoryCustom {
 	public Photos getNearestPhoto(Photos p, int pas) {
 		Photos result=null;
 		int nbTentatives=1;
-		while(result==null&&nbTentatives<pas) {
+		while(result==null&&nbTentatives<pas&&p.datePriseVue!=null) {
 			Calendar avant = Calendar.getInstance();
 			avant.setTime(p.datePriseVue);
 			avant.add(Calendar.MINUTE, nbTentatives*-1);
