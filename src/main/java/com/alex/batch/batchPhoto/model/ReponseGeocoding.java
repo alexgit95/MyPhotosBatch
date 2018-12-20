@@ -7,104 +7,104 @@ import com.google.gson.annotations.SerializedName;
 
 public class ReponseGeocoding {
 
-    @SerializedName("documentation")
+    @SerializedName("place_id")
     @Expose
-    private String documentation;
-    @SerializedName("licenses")
+    private String placeId;
+    @SerializedName("licence")
     @Expose
-    private List<License> licenses = null;
-    @SerializedName("rate")
+    private String licence;
+    @SerializedName("osm_type")
     @Expose
-    private Rate rate;
-    @SerializedName("results")
+    private String osmType;
+    @SerializedName("osm_id")
     @Expose
-    private List<Result> results = null;
-    @SerializedName("status")
+    private String osmId;
+    @SerializedName("lat")
     @Expose
-    private Status status;
-    @SerializedName("stay_informed")
+    private String lat;
+    @SerializedName("lon")
     @Expose
-    private StayInformed stayInformed;
-    @SerializedName("thanks")
+    private String lon;
+    @SerializedName("display_name")
     @Expose
-    private String thanks;
-    @SerializedName("timestamp")
+    private String displayName;
+    @SerializedName("address")
     @Expose
-    private Timestamp timestamp;
-    @SerializedName("total_results")
+    private Address address;
+    @SerializedName("boundingbox")
     @Expose
-    private Integer totalResults;
+    private List<String> boundingbox = null;
 
-    public String getDocumentation() {
-        return documentation;
+    public String getPlaceId() {
+        return placeId;
     }
 
-    public void setDocumentation(String documentation) {
-        this.documentation = documentation;
+    public void setPlaceId(String placeId) {
+        this.placeId = placeId;
     }
 
-    public List<License> getLicenses() {
-        return licenses;
+    public String getLicence() {
+        return licence;
     }
 
-    public void setLicenses(List<License> licenses) {
-        this.licenses = licenses;
+    public void setLicence(String licence) {
+        this.licence = licence;
     }
 
-    public Rate getRate() {
-        return rate;
+    public String getOsmType() {
+        return osmType;
     }
 
-    public void setRate(Rate rate) {
-        this.rate = rate;
+    public void setOsmType(String osmType) {
+        this.osmType = osmType;
     }
 
-    public List<Result> getResults() {
-        return results;
+    public String getOsmId() {
+        return osmId;
     }
 
-    public void setResults(List<Result> results) {
-        this.results = results;
+    public void setOsmId(String osmId) {
+        this.osmId = osmId;
     }
 
-    public Status getStatus() {
-        return status;
+    public String getLat() {
+        return lat;
     }
 
-    public void setStatus(Status status) {
-        this.status = status;
+    public void setLat(String lat) {
+        this.lat = lat;
     }
 
-    public StayInformed getStayInformed() {
-        return stayInformed;
+    public String getLon() {
+        return lon;
     }
 
-    public void setStayInformed(StayInformed stayInformed) {
-        this.stayInformed = stayInformed;
+    public void setLon(String lon) {
+        this.lon = lon;
     }
 
-    public String getThanks() {
-        return thanks;
+    public String getDisplayName() {
+        return displayName;
     }
 
-    public void setThanks(String thanks) {
-        this.thanks = thanks;
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
     }
 
-    public Timestamp getTimestamp() {
-        return timestamp;
+    public Address getAddress() {
+        return address;
     }
 
-    public void setTimestamp(Timestamp timestamp) {
-        this.timestamp = timestamp;
+    public void setAddress(Address address) {
+        this.address = address;
     }
 
-    public Integer getTotalResults() {
-        return totalResults;
+    public List<String> getBoundingbox() {
+        return boundingbox;
     }
 
-    public void setTotalResults(Integer totalResults) {
-        this.totalResults = totalResults;
+    public void setBoundingbox(List<String> boundingbox) {
+        this.boundingbox = boundingbox;
     }
 
 }

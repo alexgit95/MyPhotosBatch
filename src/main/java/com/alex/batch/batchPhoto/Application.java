@@ -233,13 +233,33 @@ public class Application implements CommandLineRunner {
 	
 	public Date getDateFromFilename(File fichier) {
 
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd'_'HHmmss");
-
-		try {
-			return sdf.parse(fichier.getName());
+		SimpleDateFormat sdf1 = new SimpleDateFormat("yyyyMMdd'_'HHmmss");
+		SimpleDateFormat sdf2 = new SimpleDateFormat("'WP_'yyyyMMdd");
+		SimpleDateFormat sdf3= new SimpleDateFormat("'WP_'yyyyMMdd'_'HH'_'mm'_'ss'_Pro'");
+		try{
+			if(fichier.getName().startsWith("WP_")){
+				
+				if(fichier.getName().contains("_Pro")){
+					Date parse = sdf3.parse(fichier.getName());
+					return parse;
+					
+				}else{
+					Date parse = sdf2.parse(fichier.getName().substring(0,11));
+					return parse;
+				}
+				
+			}else{
+				
+			
+				return sdf1.parse(fichier.getName());
+			}
 		} catch (ParseException e) {
 			
-			System.out.println("Impossible de parser :"+fichier.getName());
+			
+			
+			System.out.println("Impossible de parser pour la recuperation de la date :"+fichier.getName());
+			e.printStackTrace();
+			//System.exit(1);
 			//e.printStackTrace();
 			return null;
 		}
@@ -279,11 +299,12 @@ public class Application implements CommandLineRunner {
 				result.add(photos);
 			} else {
 				// On va chercher sur google
-				System.out.println("On va chercher l'information sur opencagedata....");
+				System.out.println("On va chercher l'information sur locationiq....");
 				try{
 					CloseableHttpClient httpclient = HttpClients.createDefault();
-					String url = "https://api.opencagedata.com/geocode/v1/json?q="+photos.lattitude+","+photos.longitude+"&key=6a61f452b3fd4604a25ea07e18a900f4&language=fr&pretty=1";
+					String url = "https://eu1.locationiq.com/v1/reverse.php?key="+getApiKey()+"&lat="+photos.lattitude+"&lon="+photos.longitude+"&format=json&accept-language=FR&normalizecity=1";
 					HttpGet httpGet = new HttpGet(url);
+					httpGet.addHeader("Accept-Language", "fr-FR,en");
 					//System.out.println(url);
 					ResponseHandler<String> handler = new BasicResponseHandler();
 					HttpResponse response = httpclient.execute(httpGet);
@@ -292,21 +313,21 @@ public class Application implements CommandLineRunner {
 					Gson gson = new Gson();
 					ReponseGeocoding fromJson = gson.fromJson(body, ReponseGeocoding.class);
 					
-					
-					if(fromJson.getResults().get(0).getComponents().getCountry()!=null&&fromJson.getResults().get(0).getComponents().getCity()!=null){
-						photos.ville = fromJson.getResults().get(0).getComponents().getCity();
-					}else if(fromJson.getResults().get(0).getComponents().getCountry()!=null&&fromJson.getResults().get(0).getComponents().getVillage()!=null){
-						photos.ville = fromJson.getResults().get(0).getComponents().getVillage();
-					}else if(fromJson.getResults().get(0).getComponents().getCountry()!=null&&fromJson.getResults().get(0).getComponents().getTown()!=null){
-						photos.ville = fromJson.getResults().get(0).getComponents().getTown();
+					if(fromJson.getAddress().getCounty()!=null){
+						photos.ville=fromJson.getAddress().getCounty();
+					}else if(fromJson.getAddress().getCity()!=null){
+						photos.ville=fromJson.getAddress().getCity();
+					}else if(fromJson.getAddress().getVillage()!=null){
+						photos.ville=fromJson.getAddress().getVillage();
 					}
 					
 					
-					photos.pays = fromJson.getResults().get(0).getComponents().getCountry();
 					
-					photos.region = fromJson.getResults().get(0).getComponents().getState();
+					photos.region=fromJson.getAddress().getState();
+					photos.pays=fromJson.getAddress().getCountry();
 					System.out.println("On a trouve : "+photos.ville+", "+photos.region+", "+photos.pays);
 					result.add(photos);
+					Thread.sleep(1010);
 				}catch(Exception e){
 					e.printStackTrace();
 				}
@@ -320,6 +341,10 @@ public class Application implements CommandLineRunner {
 		return result;
 	}
 	
+	
+	public String getApiKey(){
+		return "9b2d715df5569e";
+	}
 	
 	
 	
