@@ -90,6 +90,9 @@ public class PhotosRepositoryImpl implements PhotosRepositoryCustom {
 
 	@Override
 	public Photos getNearestPhotoWithGeocoding(Photos p, int pas) {
+		if(p.datePriseVue==null){
+			return null;
+		}
 		Calendar avant = Calendar.getInstance();
 		avant.setTime(p.datePriseVue);
 		avant.add(Calendar.SECOND, pas*-1);
