@@ -313,10 +313,11 @@ public class Application implements CommandLineRunner {
 					Gson gson = new Gson();
 					ReponseGeocoding fromJson = gson.fromJson(body, ReponseGeocoding.class);
 					
-					if(fromJson.getAddress().getCounty()!=null){
-						photos.ville=fromJson.getAddress().getCounty();
-					}else if(fromJson.getAddress().getCity()!=null){
+					if(fromJson.getAddress().getCity()!=null){
 						photos.ville=fromJson.getAddress().getCity();
+						
+					}else if(fromJson.getAddress().getCounty()!=null){
+						photos.ville=fromJson.getAddress().getCounty();
 					}else if(fromJson.getAddress().getVillage()!=null){
 						photos.ville=fromJson.getAddress().getVillage();
 					}
@@ -325,6 +326,10 @@ public class Application implements CommandLineRunner {
 					
 					photos.region=fromJson.getAddress().getState();
 					photos.pays=fromJson.getAddress().getCountry();
+					if(photos.pays!=null&&photos.pays.contains("??")){
+						System.out.println("api epuise");
+						return result;
+					}
 					System.out.println("On a trouve : "+photos.ville+", "+photos.region+", "+photos.pays);
 					result.add(photos);
 					Thread.sleep(1010);
