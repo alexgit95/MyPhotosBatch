@@ -24,4 +24,8 @@ public interface PhotosRepositoryCustom  {
 	Photos getNearestPhotoWithGeocoding(Photos p, int pas);
 	
 	Photos findOnePhotosByNom(String nom);
+	
+	List<Photos> findPhotosWithoutEvents();
+	
+	List<Photos> findPhotosByEvenements(Evenements evt);
 }

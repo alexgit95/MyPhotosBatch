@@ -9,17 +9,8 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
-import main.java.com.alex.batch.batchPhoto.model.ReponseGeocoding;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpResponseException;
-import org.apache.http.client.ResponseHandler;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.BasicResponseHandler;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -29,7 +20,6 @@ import com.drew.imaging.ImageMetadataReader;
 import com.drew.lang.GeoLocation;
 import com.drew.metadata.Metadata;
 import com.drew.metadata.exif.GpsDirectory;
-import com.google.gson.Gson;
 
 @SpringBootApplication
 public class Application implements CommandLineRunner {
@@ -38,23 +28,20 @@ public class Application implements CommandLineRunner {
 	private PhotosRepository repository;
 	@Autowired
 	private PhotosRepositoryCustom repositoryCustom;
+	@Autowired
+	private EvenementsRepository repositoryEvenements;
+	@Autowired
+	private EvenementsRepositoryCustom repositoryEvenementsCustom;
 
 	public static void main(String[] args) {
 		SpringApplication.run(Application.class, args);
+		
 	}
 
 	@Override
 	public void run(String... args) throws Exception {
-		boolean test=true;
-		if(test) {
-			
-			System.out.println("");
-			
-			
-			//
-			//return;
-		}
-		//repository.deleteAll();
+		repositoryEvenements.deleteAll();
+		repository.deleteAll();
 		
 		
 		
@@ -70,7 +57,7 @@ public class Application implements CommandLineRunner {
 		
 		System.out.println("-----------------------------------------------");
 		System.out.println("----------Ajout des nouveaux elements----------");
-		List<File> allFichiers = chargerFichiers("Y:\\Images");
+		List<File> allFichiers = chargerFichiers("C:\\Users\\bourgois_a\\Desktop\\Sample");
 		System.out.println("---------------Début du filtage----------------");
 		List<File> fileFiltered=filterFichierDejaPresent(allFichiers);
 		System.out.println("----------------Fin du filtage-----------------");
@@ -109,6 +96,8 @@ public class Application implements CommandLineRunner {
 		System.out.println("Photos sans geolocalisation : "+findPhotosWithNoGeolocalisation.size());
 		System.out.println("Photos sans Geocodage : "+findPhotosWithNoGeocoding.size());
 		System.out.println("Photos Geocodees : "+findPhotosWithGeoCoding.size());
+		
+		gestionEvenements(args);
 		
 	}
 	
@@ -236,6 +225,7 @@ public class Application implements CommandLineRunner {
 		SimpleDateFormat sdf1 = new SimpleDateFormat("yyyyMMdd'_'HHmmss");
 		SimpleDateFormat sdf2 = new SimpleDateFormat("'WP_'yyyyMMdd");
 		SimpleDateFormat sdf3= new SimpleDateFormat("'WP_'yyyyMMdd'_'HH'_'mm'_'ss'_Pro'");
+		SimpleDateFormat sdf4= new SimpleDateFormat("'IMG_'yyyyMMdd'_'HHmmss");
 		try{
 			if(fichier.getName().startsWith("WP_")){
 				
@@ -249,9 +239,13 @@ public class Application implements CommandLineRunner {
 				}
 				
 			}else{
-				
+				if(fichier.getName().startsWith("IMG_")) {
+					return sdf4.parse(fichier.getName());
+				}else {
+					return sdf1.parse(fichier.getName());
+				}
 			
-				return sdf1.parse(fichier.getName());
+				
 			}
 		} catch (ParseException e) {
 			
@@ -299,10 +293,10 @@ public class Application implements CommandLineRunner {
 				result.add(photos);
 			} else {
 				// On va chercher sur google
-				System.out.println("On va chercher l'information sur locationiq....");
+			/*	System.out.println("On va chercher l'information sur locationiq....");
 				try{
 					CloseableHttpClient httpclient = HttpClients.createDefault();
-					String url = "https://eu1.locationiq.com/v1/reverse.php?key="+getApiKey()+"&lat="+photos.lattitude+"&lon="+photos.longitude+"&format=json&accept-language=FR&normalizecity=1";
+					String url = "https://127.0.0.1/v1/reverse.php?key="+getApiKey()+"&lat="+photos.lattitude+"&lon="+photos.longitude+"&format=json&accept-language=FR&normalizecity=1";
 					HttpGet httpGet = new HttpGet(url);
 					httpGet.addHeader("Accept-Language", "fr-FR,en");
 					//System.out.println(url);
@@ -332,10 +326,10 @@ public class Application implements CommandLineRunner {
 					}
 					System.out.println("On a trouve : "+photos.ville+", "+photos.region+", "+photos.pays);
 					result.add(photos);
-					Thread.sleep(1010);
+					//Thread.sleep(1010);
 				}catch(Exception e){
 					e.printStackTrace();
-				}
+				}*/
 			}
 			if(i%100==0){
 				repository.saveAll(result);
@@ -353,6 +347,86 @@ public class Application implements CommandLineRunner {
 	
 	
 	
+	
+	
+	
+	
+	
+	public void gestionEvenements(String... args) throws Exception {
+		
+		//Je recupere toutes les photos sans evenements
+		List<Photos> findPhotosWithoutEvents = repositoryCustom.findPhotosWithoutEvents();
+		System.out.println("NB Photos sans evt : :"+findPhotosWithoutEvents.size() );
+		
+			//Pour chaque photo, je recupere cherche l'evenement qui peux coincider et l'ajoute
+			// si aucun n'est trouvé je crée un nouvel evenement
+			for(int i=0;i<findPhotosWithoutEvents.size();i++) {
+				if(findPhotosWithoutEvents.get(i).datePriseVue==null) {
+					continue;
+				}
+				Evenements searchEvenementByDate = repositoryEvenementsCustom.searchEvenementByDate(findPhotosWithoutEvents.get(i).datePriseVue);
+				if(searchEvenementByDate==null) {
+					Evenements evt = new Evenements();
+					evt.debut=findPhotosWithoutEvents.get(i).datePriseVue;
+					evt.fin=findPhotosWithoutEvents.get(i).datePriseVue;
+					findPhotosWithoutEvents.get(i).evt=evt;
+					repositoryEvenements.save(evt);
+					
+				}else {
+					findPhotosWithoutEvents.get(i).evt=searchEvenementByDate;
+					if(findPhotosWithoutEvents.get(i).datePriseVue.after(searchEvenementByDate.fin)) {
+						searchEvenementByDate.fin=findPhotosWithoutEvents.get(i).datePriseVue;
+						repositoryEvenements.save(searchEvenementByDate);
+						
+					}else if(findPhotosWithoutEvents.get(i).datePriseVue.before(searchEvenementByDate.debut)) {
+						searchEvenementByDate.debut=findPhotosWithoutEvents.get(i).datePriseVue;
+						repositoryEvenements.save(searchEvenementByDate);
+						
+					}
+				}
+			}
+		
+		
+		
+		
+		// On regroupe les evenements
+		List<Evenements> result= new ArrayList<>();
+		List<Evenements> findAll = repositoryEvenements.findAll();
+		for (Evenements evenements : findAll) {
+			if(!repositoryEvenementsCustom.evenementInclutDansUnAutre(evenements)) {
+				result.add(evenements);
+			}
+			
+		}
+		repositoryEvenements.deleteAll();
+		repositoryEvenements.saveAll(result);
+		result.clear();
+		
+		//On recherche si d'autres evenements peuvent etre lié entre eux
+		findAll = repositoryEvenements.findAll();
+		for (Evenements evenements : findAll) {
+			Evenements searchEvenementByDateFin = repositoryEvenementsCustom.searchEvenementByDateNotSameId(evenements);
+			
+			if(searchEvenementByDateFin!=null) {
+				if(repositoryCustom.findPhotosByEvenements(searchEvenementByDateFin).size()>repositoryCustom.findPhotosByEvenements(evenements).size()) {
+					result.add(evenements);
+				}
+				
+			}else {
+				result.add(evenements);
+			}
+		}
+		repositoryEvenements.deleteAll();
+		repositoryEvenements.saveAll(result);
+		result.clear();
+		
+		//On reaffecte les evnements aux photos qui n'ont pas d'evenement
+		
+		
+		
+		//je sauvegarde les photos
+		repository.saveAll(findPhotosWithoutEvents);
+	}
 	
 	
 

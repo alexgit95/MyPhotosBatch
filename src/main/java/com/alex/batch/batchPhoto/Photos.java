@@ -24,6 +24,7 @@ public class Photos {
 	  public int minute;
 	  public int secondes;
 	  public int heure;
+	  public Evenements evt;
 	  
 	  
 	  public Photos() {}

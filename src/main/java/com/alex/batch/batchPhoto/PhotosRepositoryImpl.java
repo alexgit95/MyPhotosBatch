@@ -129,6 +129,28 @@ public class PhotosRepositoryImpl implements PhotosRepositoryCustom {
 		
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public List<Photos> findPhotosWithoutEvents() {
+		Query query = new Query(Criteria.where("evt").is(null));
+		
+		List<Photos> find = mongoTemplate.find(query, Photos.class);
+		//System.out.println(find);
+		return find;
+	}
+
+	@Override
+	public List<Photos> findPhotosByEvenements(Evenements evt) {
+		//TODO voir comment interpreter le object id
+		Query query = new Query(Criteria.where("evt").is(evt));
+		
+		List<Photos> find = mongoTemplate.find(query, Photos.class);
+		//System.out.println(find);
+		return find;
+	}
+
 	
 
 }
