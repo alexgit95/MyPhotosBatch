@@ -57,13 +57,18 @@ public class Application implements CommandLineRunner {
 		
 		System.out.println("-----------------------------------------------");
 		System.out.println("----------Ajout des nouveaux elements----------");
+<<<<<<< HEAD
 		List<File> allFichiers = chargerFichiers("C:\\Users\\bourgois_a\\Desktop\\Sample");
 		System.out.println("---------------Début du filtage----------------");
+=======
+		List<File> allFichiers = chargerFichiers("Y:\\Images");
+		System.out.println("---------------DÃ©but du filtage----------------");
+>>>>>>> ea9b7bf6d29c2383d80df85a10b88a3f29c9960a
 		List<File> fileFiltered=filterFichierDejaPresent(allFichiers);
 		System.out.println("----------------Fin du filtage-----------------");
-		System.out.println("-----Début de la récuperation des infos--------");
+		System.out.println("-----DÃ©but de la rÃ©cuperation des infos--------");
 		List<Photos> recuperationInfoComplementaire = recuperationInfoComplementaire(fileFiltered);
-		System.out.println("-------Fin de la récuperation des infos--------");
+		System.out.println("-------Fin de la rÃ©cuperation des infos--------");
 		sauvegardePhotosdansBDD(recuperationInfoComplementaire);
 		System.out.println("-----------Sauvegarde effectuee----------------");
 		System.out.println("------Completion des elements de geocodage-----");
@@ -89,7 +94,7 @@ public class Application implements CommandLineRunner {
 		System.out.println("--FIN Recherche des infos de geolocalisation ---");
 		repository.saveAll(fillGeolocation);
 		System.out.println("-----------Sauvegarde effectuee------------------");
-		System.out.println("--------Compte Rendu après traitements---------");
+		System.out.println("--------Compte Rendu aprÃ¨s traitements---------");
 		findPhotosWithGeoCoding = repositoryCustom.findPhotosWithGeoCoding();
 		findPhotosWithNoGeocoding = repositoryCustom.findPhotosWithNoGeocoding();
 		findPhotosWithNoGeolocalisation = repositoryCustom.findPhotosWithNoGeolocalisation();
@@ -145,10 +150,10 @@ public class Application implements CommandLineRunner {
 				//System.out.println("On ajoute "+file.getName());
 				result.add(file);
 			}else {
-				//System.out.println("Deja présent on ne l'ajoute pas");
+				//System.out.println("Deja prÃ©sent on ne l'ajoute pas");
 			}
 		}
-		System.out.println("NB elements à traiter : "+result.size());
+		System.out.println("NB elements Ã  traiter : "+result.size());
 		return result;
 	}
 	
@@ -244,8 +249,11 @@ public class Application implements CommandLineRunner {
 				}else {
 					return sdf1.parse(fichier.getName());
 				}
+<<<<<<< HEAD
 			
 				
+=======
+>>>>>>> ea9b7bf6d29c2383d80df85a10b88a3f29c9960a
 			}
 		} catch (ParseException e) {
 			
@@ -286,7 +294,7 @@ public class Application implements CommandLineRunner {
 			// On regarde si on a l'info en bdd
 			Photos nearestPhotoWithGeocoding = repositoryCustom.getNearestPhotoWithGeocoding(photos, 180);
 			if (nearestPhotoWithGeocoding != null) {
-				System.out.println("L'information a été trouvée en base " + nearestPhotoWithGeocoding);
+				System.out.println("L'information a Ã©tÃ© trouvÃ©e en base " + nearestPhotoWithGeocoding);
 				photos.pays = nearestPhotoWithGeocoding.pays;
 				photos.ville = nearestPhotoWithGeocoding.ville;
 				photos.region = nearestPhotoWithGeocoding.region;
@@ -333,7 +341,7 @@ public class Application implements CommandLineRunner {
 			}
 			if(i%100==0){
 				repository.saveAll(result);
-				System.out.println("Sauvegarde partielle effectuée");
+				System.out.println("Sauvegarde partielle effectuÃ©e");
 			}
 		}
 
