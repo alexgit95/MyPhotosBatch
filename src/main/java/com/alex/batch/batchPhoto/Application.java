@@ -9,8 +9,16 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
+import main.java.com.alex.batch.batchPhoto.model.ReponseGeocoding;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ResponseHandler;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.BasicResponseHandler;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -20,6 +28,7 @@ import com.drew.imaging.ImageMetadataReader;
 import com.drew.lang.GeoLocation;
 import com.drew.metadata.Metadata;
 import com.drew.metadata.exif.GpsDirectory;
+import com.google.gson.Gson;
 
 @SpringBootApplication
 public class Application implements CommandLineRunner {
@@ -40,8 +49,8 @@ public class Application implements CommandLineRunner {
 
 	@Override
 	public void run(String... args) throws Exception {
-		repositoryEvenements.deleteAll();
-		repository.deleteAll();
+		/*repositoryEvenements.deleteAll();
+		repository.deleteAll();*/
 		
 		
 		
@@ -57,7 +66,7 @@ public class Application implements CommandLineRunner {
 		
 		System.out.println("-----------------------------------------------");
 		System.out.println("----------Ajout des nouveaux elements----------");
-		List<File> allFichiers = chargerFichiers("C:\\Users\\bourgois_a\\Desktop\\Sample");
+		List<File> allFichiers = chargerFichiers("Y:\\Images");
 		System.out.println("---------------Début du filtage----------------");
 		List<File> fileFiltered=filterFichierDejaPresent(allFichiers);
 		System.out.println("----------------Fin du filtage-----------------");
@@ -262,8 +271,10 @@ public class Application implements CommandLineRunner {
 	
 	
 	public List<Photos> fillGeolocationAndGeocoding(List<Photos> all) {
+		int i=0;
 		List<Photos> result = new ArrayList<>();
 		for (Photos photos : all) {
+			i++;
 			Photos nearestPhoto = repositoryCustom.getNearestPhoto(photos, 15);
 			if (nearestPhoto != null) {
 				photos.lattitude = nearestPhoto.lattitude;
@@ -272,6 +283,9 @@ public class Application implements CommandLineRunner {
 				photos.region=nearestPhoto.region;
 				photos.ville=nearestPhoto.ville;
 				result.add(photos);
+			}
+			if(i%100==0){
+				System.out.println(i+"/"+all.size());
 			}
 		}
 		return result;
@@ -293,10 +307,10 @@ public class Application implements CommandLineRunner {
 				result.add(photos);
 			} else {
 				// On va chercher sur google
-			/*	System.out.println("On va chercher l'information sur locationiq....");
+				System.out.println("On va chercher l'information sur locationiq....");
 				try{
 					CloseableHttpClient httpclient = HttpClients.createDefault();
-					String url = "https://127.0.0.1/v1/reverse.php?key="+getApiKey()+"&lat="+photos.lattitude+"&lon="+photos.longitude+"&format=json&accept-language=FR&normalizecity=1";
+					String url = "https://eu1.locationiq.com/v1/reverse.php?key="+getApiKey()+"&lat="+photos.lattitude+"&lon="+photos.longitude+"&format=json&accept-language=FR&normalizecity=1";
 					HttpGet httpGet = new HttpGet(url);
 					httpGet.addHeader("Accept-Language", "fr-FR,en");
 					//System.out.println(url);
@@ -326,10 +340,10 @@ public class Application implements CommandLineRunner {
 					}
 					System.out.println("On a trouve : "+photos.ville+", "+photos.region+", "+photos.pays);
 					result.add(photos);
-					//Thread.sleep(1010);
+					Thread.sleep(1010);
 				}catch(Exception e){
 					e.printStackTrace();
-				}*/
+				}
 			}
 			if(i%100==0){
 				repository.saveAll(result);
