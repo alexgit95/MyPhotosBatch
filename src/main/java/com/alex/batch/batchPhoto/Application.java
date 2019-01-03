@@ -1,6 +1,8 @@
 package main.java.com.alex.batch.batchPhoto;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -14,8 +16,11 @@ import main.java.com.alex.batch.batchPhoto.model.ReponseGeocoding;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -69,6 +74,7 @@ public class Application implements CommandLineRunner {
 		List<File> allFichiers = chargerFichiers("Y:\\Images");
 		System.out.println("---------------Début du filtage----------------");
 		List<File> fileFiltered=filterFichierDejaPresent(allFichiers);
+		notificationNouvellesPhotos(fileFiltered.size());
 		System.out.println("----------------Fin du filtage-----------------");
 		System.out.println("-----Début de la récuperation des infos--------");
 		List<Photos> recuperationInfoComplementaire = recuperationInfoComplementaire(fileFiltered);
@@ -105,6 +111,7 @@ public class Application implements CommandLineRunner {
 		System.out.println("Photos sans geolocalisation : "+findPhotosWithNoGeolocalisation.size());
 		System.out.println("Photos sans Geocodage : "+findPhotosWithNoGeocoding.size());
 		System.out.println("Photos Geocodees : "+findPhotosWithGeoCoding.size());
+		notificationResultat(findPhotosWithNoGeolocalisation.size(),findPhotosWithNoGeocoding.size(),findPhotosWithGeoCoding.size());
 		
 		gestionEvenements(args);
 		
@@ -441,6 +448,27 @@ public class Application implements CommandLineRunner {
 		//je sauvegarde les photos
 		repository.saveAll(findPhotosWithoutEvents);
 	}
+	
+	  private void notificationNouvellesPhotos(int nbNouvellesPhotos) throws UnsupportedEncodingException, IOException, ClientProtocolException {
+          CloseableHttpClient httpclient = HttpClients.createDefault();
+          final String url="https://maker.ifttt.com/trigger/nouvelles_photos/with/key/"+getApiKeyIFTTT()+"?value1="+nbNouvellesPhotos;
+          HttpPost httpPost = new HttpPost(url);
+          httpclient.execute(httpPost);
+    }
+
+   
+
+    private void notificationResultat(int nbPhotosSansGeolocalisation, int nbPhotosSansGecodage, int nbPhotosGeocode) throws UnsupportedEncodingException, IOException, ClientProtocolException {
+          CloseableHttpClient httpclient = HttpClients.createDefault();
+          final String url="https://maker.ifttt.com/trigger/resultatTraitementPhotos/with/key/"+getApiKeyIFTTT()+"?value1="+nbPhotosSansGeolocalisation+"&value2="+nbPhotosSansGecodage+"&value3="+nbPhotosGeocode;
+          HttpPost httpPost = new HttpPost(url);
+          httpclient.execute(httpPost);
+    }
+
+
+public String getApiKeyIFTTT() {
+        return "fl3k9za5qcs_mUfUPlMPXs9AO1bMLfKzB2hIlMDCA3A";
+}
 	
 	
 
