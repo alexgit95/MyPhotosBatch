@@ -10,6 +10,7 @@ public class Evenements {
 	public String nom;
 	public Date debut;
 	public Date fin;
+	public boolean valid;
 	
 
 	public Evenements() {

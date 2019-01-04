@@ -54,11 +54,6 @@ public class Application implements CommandLineRunner {
 
 	@Override
 	public void run(String... args) throws Exception {
-		/*repositoryEvenements.deleteAll();
-		repository.deleteAll();*/
-		
-		
-		
 		
 		System.out.println("--------Compte Rendu avant traitements---------");
 		List<Photos> findPhotosWithGeoCoding = repositoryCustom.findPhotosWithGeoCoding();
@@ -390,6 +385,7 @@ public class Application implements CommandLineRunner {
 					Evenements evt = new Evenements();
 					evt.debut=findPhotosWithoutEvents.get(i).datePriseVue;
 					evt.fin=findPhotosWithoutEvents.get(i).datePriseVue;
+					evt.valid=false;
 					findPhotosWithoutEvents.get(i).evt=evt;
 					repositoryEvenements.save(evt);
 					
