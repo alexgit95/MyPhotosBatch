@@ -17,4 +17,9 @@ public interface EvenementsRepositoryCustom {
 	
 	
 	
+	Evenements findEvtWherePhotoisInclude(Photos p);
+	
+	Evenements findEvtWherePhotoisLink(Photos p);
+	
+	
 }

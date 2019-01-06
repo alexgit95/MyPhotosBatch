@@ -46,6 +46,8 @@ public class Application implements CommandLineRunner {
 	private EvenementsRepository repositoryEvenements;
 	@Autowired
 	private EvenementsRepositoryCustom repositoryEvenementsCustom;
+	
+	public static final  int nbPhotoForEvt=20;
 
 	public static void main(String[] args) {
 		SpringApplication.run(Application.class, args);
@@ -108,7 +110,23 @@ public class Application implements CommandLineRunner {
 		System.out.println("Photos Geocodees : "+findPhotosWithGeoCoding.size());
 		notificationResultat(findPhotosWithNoGeolocalisation.size(),findPhotosWithNoGeocoding.size(),findPhotosWithGeoCoding.size());
 		
-		gestionEvenements(args);
+		
+		
+		
+		//PARTIE EVENEMENTS
+		
+		
+		/*
+		 //RAZ EVT
+		List<Photos> findAll = repository.findAll();
+		for(int i=0;i<findAll.size();i++){
+			findAll.get(i).evt=null;
+		}
+		repository.saveAll(findAll);
+		
+		repositoryEvenements.deleteAll();
+		*/
+		gestionEvenements2(args);
 		
 	}
 	
@@ -464,6 +482,70 @@ public class Application implements CommandLineRunner {
 
 public String getApiKeyIFTTT() {
         return "fl3k9za5qcs_mUfUPlMPXs9AO1bMLfKzB2hIlMDCA3A";
+}
+
+public void gestionEvenements2(String... args) throws Exception {
+	System.out.println("Recherche de toutes les photos, triees par date de prise de vue");
+	List<Photos> allPhotos = repositoryCustom.findAllOrderByDate();
+	final double nbPhotos = allPhotos.size();
+	System.out.println("Fin de la recherche, photos a traiter : "+nbPhotos);
+	for(int i=0;i<nbPhotos;i++){
+		if(allPhotos.get(i).datePriseVue==null){
+			continue;
+		}
+		if(allPhotos.get(i).evt!=null){
+			System.out.println(allPhotos.get(i).chemin+" a deja un evt, RAS");
+			continue;
+		}
+		
+		Evenements findEvtWherePhotoisInclude = repositoryEvenementsCustom.findEvtWherePhotoisInclude(allPhotos.get(i));
+		if(findEvtWherePhotoisInclude!=null){
+			findEvtWherePhotoisInclude.fin=allPhotos.get(i).datePriseVue;
+			repositoryEvenements.save(findEvtWherePhotoisInclude);
+			System.out.println(allPhotos.get(i).chemin+" est inclus dans "+findEvtWherePhotoisInclude.toString());
+			continue;
+		}
+		Evenements findEvtWherePhotoisLink = repositoryEvenementsCustom.findEvtWherePhotoisLink(allPhotos.get(i));
+		if(findEvtWherePhotoisLink!=null){
+			findEvtWherePhotoisLink.fin=allPhotos.get(i).datePriseVue;
+			repositoryEvenements.save(findEvtWherePhotoisLink);
+			System.out.println(allPhotos.get(i).chemin+" est lie a "+findEvtWherePhotoisLink);
+			continue;
+		}
+		
+		Evenements evenements = new Evenements();
+		evenements.debut=allPhotos.get(i).datePriseVue;
+		evenements.fin=allPhotos.get(i).datePriseVue;
+		evenements.valid=false;
+		repositoryEvenements.save(evenements);
+		System.out.println(allPhotos.get(i).chemin+" orphelin, creation"+evenements);
+	}
+	
+	
+	
+	//On recupere tous les evenements
+	List<Evenements> allEvts = repositoryEvenements.findAll();
+	for (Evenements evenements : allEvts) {
+		List<Photos> findPhotosBetweenTwoDates = repositoryCustom.findPhotosBetweenTwoDates(evenements.debut, evenements.fin);
+		if(findPhotosBetweenTwoDates.size()>=nbPhotoForEvt){
+			//System.out.println("L'evenement debutant le "+evenements.debut+" "+evenements.fin+" est conserve :"+findPhotosBetweenTwoDates.size());
+			for(int i=0;i<findPhotosBetweenTwoDates.size();i++){
+				findPhotosBetweenTwoDates.get(i).evt=evenements;
+			}
+			repository.saveAll(findPhotosBetweenTwoDates);
+			
+		}else{
+			//System.out.println("On supprime l'evenement il n'a que "+findPhotosBetweenTwoDates.size()+" : "+evenements);
+			repositoryEvenements.delete(evenements);
+		}
+		
+	}
+	List<Photos> findPhotosWithoutEvents = repositoryCustom.findPhotosWithoutEvents();
+	
+	final double sansEvtSize = findPhotosWithoutEvents.size();
+	double pctEvt=100-((sansEvtSize/nbPhotos)*100);
+	System.out.println("Il y a "+nbPhotos+" photos, il en reste "+sansEvtSize+" sans evenement, soit "+pctEvt+"% ok");
+	
 }
 	
 	

@@ -4,7 +4,10 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
+
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -148,6 +151,25 @@ public class PhotosRepositoryImpl implements PhotosRepositoryCustom {
 		
 		List<Photos> find = mongoTemplate.find(query, Photos.class);
 		//System.out.println(find);
+		return find;
+	}
+
+	@Override
+	public List<Photos> findAllOrderByDate() {
+		Query query = new Query(Criteria.where("datePriseVue").ne(null));
+		query.with(new Sort(Sort.Direction.ASC,"datePriseVue"));
+		
+		List<Photos> find = mongoTemplate.find(query, Photos.class);
+		return find;
+	}
+	
+	@Override
+	public List<Photos> findPhotosBetweenTwoDates(Date start, Date end) {
+		Query query = new Query(Criteria.where("datePriseVue").gte(start)
+				.andOperator(Criteria.where("datePriseVue").lte(end)));
+		
+		
+		List<Photos> find = mongoTemplate.find(query, Photos.class);
 		return find;
 	}
 

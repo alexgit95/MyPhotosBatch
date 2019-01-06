@@ -118,4 +118,48 @@ public class EvenementsRepositoryImpl  implements EvenementsRepositoryCustom{
 		}
 	}
 
+
+
+
+
+
+
+
+
+	@Override
+	public Evenements findEvtWherePhotoisInclude(Photos p) {
+		Query query = new Query(Criteria.where("debut").lte(p.datePriseVue)
+				.andOperator(Criteria.where("fin").gte(p.datePriseVue)));
+		
+		List<Evenements> find = mongoTemplate.find(query, Evenements.class);
+		if(find.size()==0){
+			return null;
+		}
+		return find.get(0);
+	}
+
+
+
+
+
+
+
+
+
+	@Override
+	public Evenements findEvtWherePhotoisLink(Photos p) {
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(p.datePriseVue);
+		cal.add(Calendar.DAY_OF_MONTH, -1);
+		Date time = cal.getTime();
+		Query query = new Query(Criteria.where("debut").lte(p.datePriseVue)
+				.andOperator(Criteria.where("fin").gte(time)));
+		
+		List<Evenements> find = mongoTemplate.find(query, Evenements.class);
+		if(find.size()==0){
+			return null;
+		}
+		return find.get(0);
+	}
+
 }
