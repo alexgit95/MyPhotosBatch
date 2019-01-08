@@ -9,7 +9,9 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import main.java.com.alex.batch.batchPhoto.model.ReponseGeocoding;
 
@@ -20,7 +22,6 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -48,6 +49,10 @@ public class Application implements CommandLineRunner {
 	private EvenementsRepositoryCustom repositoryEvenementsCustom;
 	
 	public static final  int nbPhotoForEvt=20;
+	
+	public static final int nbVillesMaxParNOmEvt=5;
+		
+	public static final SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
 
 	public static void main(String[] args) {
 		SpringApplication.run(Application.class, args);
@@ -116,8 +121,9 @@ public class Application implements CommandLineRunner {
 		//PARTIE EVENEMENTS
 		
 		
-		/*
+		
 		 //RAZ EVT
+		/*
 		List<Photos> findAll = repository.findAll();
 		for(int i=0;i<findAll.size();i++){
 			findAll.get(i).evt=null;
@@ -386,82 +392,7 @@ public class Application implements CommandLineRunner {
 	
 	
 	
-	public void gestionEvenements(String... args) throws Exception {
-		
-		//Je recupere toutes les photos sans evenements
-		List<Photos> findPhotosWithoutEvents = repositoryCustom.findPhotosWithoutEvents();
-		System.out.println("NB Photos sans evt : :"+findPhotosWithoutEvents.size() );
-		
-			//Pour chaque photo, je recupere cherche l'evenement qui peux coincider et l'ajoute
-			// si aucun n'est trouvé je crée un nouvel evenement
-			for(int i=0;i<findPhotosWithoutEvents.size();i++) {
-				if(findPhotosWithoutEvents.get(i).datePriseVue==null) {
-					continue;
-				}
-				Evenements searchEvenementByDate = repositoryEvenementsCustom.searchEvenementByDate(findPhotosWithoutEvents.get(i).datePriseVue);
-				if(searchEvenementByDate==null) {
-					Evenements evt = new Evenements();
-					evt.debut=findPhotosWithoutEvents.get(i).datePriseVue;
-					evt.fin=findPhotosWithoutEvents.get(i).datePriseVue;
-					evt.valid=false;
-					findPhotosWithoutEvents.get(i).evt=evt;
-					repositoryEvenements.save(evt);
-					
-				}else {
-					findPhotosWithoutEvents.get(i).evt=searchEvenementByDate;
-					if(findPhotosWithoutEvents.get(i).datePriseVue.after(searchEvenementByDate.fin)) {
-						searchEvenementByDate.fin=findPhotosWithoutEvents.get(i).datePriseVue;
-						repositoryEvenements.save(searchEvenementByDate);
-						
-					}else if(findPhotosWithoutEvents.get(i).datePriseVue.before(searchEvenementByDate.debut)) {
-						searchEvenementByDate.debut=findPhotosWithoutEvents.get(i).datePriseVue;
-						repositoryEvenements.save(searchEvenementByDate);
-						
-					}
-				}
-			}
-		
-		
-		
-		
-		// On regroupe les evenements
-		List<Evenements> result= new ArrayList<>();
-		List<Evenements> findAll = repositoryEvenements.findAll();
-		for (Evenements evenements : findAll) {
-			if(!repositoryEvenementsCustom.evenementInclutDansUnAutre(evenements)) {
-				result.add(evenements);
-			}
-			
-		}
-		repositoryEvenements.deleteAll();
-		repositoryEvenements.saveAll(result);
-		result.clear();
-		
-		//On recherche si d'autres evenements peuvent etre lié entre eux
-		findAll = repositoryEvenements.findAll();
-		for (Evenements evenements : findAll) {
-			Evenements searchEvenementByDateFin = repositoryEvenementsCustom.searchEvenementByDateNotSameId(evenements);
-			
-			if(searchEvenementByDateFin!=null) {
-				if(repositoryCustom.findPhotosByEvenements(searchEvenementByDateFin).size()>repositoryCustom.findPhotosByEvenements(evenements).size()) {
-					result.add(evenements);
-				}
-				
-			}else {
-				result.add(evenements);
-			}
-		}
-		repositoryEvenements.deleteAll();
-		repositoryEvenements.saveAll(result);
-		result.clear();
-		
-		//On reaffecte les evnements aux photos qui n'ont pas d'evenement
-		
-		
-		
-		//je sauvegarde les photos
-		repository.saveAll(findPhotosWithoutEvents);
-	}
+	
 	
 	  private void notificationNouvellesPhotos(int nbNouvellesPhotos) throws UnsupportedEncodingException, IOException, ClientProtocolException {
           CloseableHttpClient httpclient = HttpClients.createDefault();
@@ -494,7 +425,7 @@ public void gestionEvenements2(String... args) throws Exception {
 			continue;
 		}
 		if(allPhotos.get(i).evt!=null){
-			System.out.println(allPhotos.get(i).chemin+" a deja un evt, RAS");
+			//System.out.println(allPhotos.get(i).chemin+" a deja un evt, RAS");
 			continue;
 		}
 		
@@ -502,14 +433,14 @@ public void gestionEvenements2(String... args) throws Exception {
 		if(findEvtWherePhotoisInclude!=null){
 			findEvtWherePhotoisInclude.fin=allPhotos.get(i).datePriseVue;
 			repositoryEvenements.save(findEvtWherePhotoisInclude);
-			System.out.println(allPhotos.get(i).chemin+" est inclus dans "+findEvtWherePhotoisInclude.toString());
+			//System.out.println(allPhotos.get(i).chemin+" est inclus dans "+findEvtWherePhotoisInclude.toString());
 			continue;
 		}
 		Evenements findEvtWherePhotoisLink = repositoryEvenementsCustom.findEvtWherePhotoisLink(allPhotos.get(i));
 		if(findEvtWherePhotoisLink!=null){
 			findEvtWherePhotoisLink.fin=allPhotos.get(i).datePriseVue;
 			repositoryEvenements.save(findEvtWherePhotoisLink);
-			System.out.println(allPhotos.get(i).chemin+" est lie a "+findEvtWherePhotoisLink);
+			//System.out.println(allPhotos.get(i).chemin+" est lie a "+findEvtWherePhotoisLink);
 			continue;
 		}
 		
@@ -518,9 +449,9 @@ public void gestionEvenements2(String... args) throws Exception {
 		evenements.fin=allPhotos.get(i).datePriseVue;
 		evenements.valid=false;
 		repositoryEvenements.save(evenements);
-		System.out.println(allPhotos.get(i).chemin+" orphelin, creation"+evenements);
+		//System.out.println(allPhotos.get(i).chemin+" orphelin, creation"+evenements);
 	}
-	
+	System.out.println("Fin du calcul des evenements");
 	
 	
 	//On recupere tous les evenements
@@ -546,6 +477,89 @@ public void gestionEvenements2(String... args) throws Exception {
 	double pctEvt=100-((sansEvtSize/nbPhotos)*100);
 	System.out.println("Il y a "+nbPhotos+" photos, il en reste "+sansEvtSize+" sans evenement, soit "+pctEvt+"% ok");
 	
+	
+	//Generation de nom
+	allEvts = repositoryEvenements.findAll();
+	for(int i=0;i<allEvts.size();i++) {
+		Calendar caldebut=Calendar.getInstance();
+		caldebut.setTime(allEvts.get(i).debut);
+		caldebut.add(Calendar.DAY_OF_MONTH, 5);
+		if(allEvts.get(i).fin.after(caldebut.getTime())) {
+			//On part sur des vacances
+			List<Photos> findPhotosByEvenements = repositoryCustom.findPhotosByEvenements(allEvts.get(i));
+			if("France".equalsIgnoreCase(findPhotosByEvenements.get(10).pays)) {
+				allEvts.get(i).nom="Vacances à "+gestionVille(findPhotosByEvenements)+" du "+sdf.format(allEvts.get(i).debut)+" au "+sdf.format(allEvts.get(i).fin);
+			
+			}else{
+				allEvts.get(i).nom="Vacances à "+findPhotosByEvenements.get(10).region+", "+findPhotosByEvenements.get(10).pays+" du "+sdf.format(allEvts.get(i).debut)+" au "+sdf.format(allEvts.get(i).fin);
+			}
+			System.out.println(allEvts.get(i).nom);
+			continue;
+		}
+		
+		//On essai un week end ou quelques jours
+		caldebut.setTime(allEvts.get(i).debut);
+		caldebut.add(Calendar.DAY_OF_MONTH, 2);
+		if(allEvts.get(i).fin.after(caldebut.getTime())) {
+			Calendar tempcal= Calendar.getInstance();
+			tempcal.setTime(allEvts.get(i).fin);
+			
+			//On part sur quelques jours
+			//On test si cela se termine sur un dimanche
+			if(tempcal.get(Calendar.DAY_OF_WEEK)==Calendar.SUNDAY||tempcal.get(Calendar.DAY_OF_WEEK)==Calendar.SATURDAY) {
+				List<Photos> findPhotosByEvenements = repositoryCustom.findPhotosByEvenements(allEvts.get(i));
+				if("France".equalsIgnoreCase(findPhotosByEvenements.get(18).pays)) {
+					allEvts.get(i).nom="Week end à "+gestionVille(findPhotosByEvenements)+" du "+sdf.format(allEvts.get(i).debut)+" au "+sdf.format(allEvts.get(i).fin);
+				}else {
+					allEvts.get(i).nom="Week end à "+gestionVille(findPhotosByEvenements)+", "+findPhotosByEvenements.get(18).pays+" du "+sdf.format(allEvts.get(i).debut)+" au "+sdf.format(allEvts.get(i).fin);
+				}
+				System.out.println(allEvts.get(i).nom);
+				continue;
+				
+			}
+			//Sinon quelques jours
+			List<Photos> findPhotosByEvenements = repositoryCustom.findPhotosByEvenements(allEvts.get(i));
+			allEvts.get(i).nom="Quelques jours à "+gestionVille(findPhotosByEvenements)+" du "+sdf.format(allEvts.get(i).debut)+" au "+sdf.format(allEvts.get(i).fin);
+			System.out.println(allEvts.get(i).nom);
+			continue;
+		}
+		
+		
+		//C'est peu de temps
+		List<Photos> findPhotosByEvenements = repositoryCustom.findPhotosByEvenements(allEvts.get(i));
+		if("France".equalsIgnoreCase(findPhotosByEvenements.get(18).pays)) {
+			allEvts.get(i).nom="Sortie à "+gestionVille(findPhotosByEvenements)+" le "+sdf.format(allEvts.get(i).debut);
+		}else {
+			allEvts.get(i).nom="Sortie à "+gestionVille(findPhotosByEvenements)+", "+findPhotosByEvenements.get(18).pays+" le "+sdf.format(allEvts.get(i).debut);
+		}
+		System.out.println(allEvts.get(i).nom);
+		
+	}
+	repositoryEvenements.saveAll(allEvts);
+	
+}
+
+public String gestionVille(List<Photos> allPhotos) {
+	String result="";
+	Set<String> villes= new HashSet<>();
+	for(Photos p : allPhotos) {
+		if(p.ville!=null) {
+			villes.add(p.ville);
+		}
+	}
+	int compteur=0;
+	for (String string : villes) {
+		if(compteur<=nbVillesMaxParNOmEvt) {
+			result+=string+", ";
+		}
+		compteur++;
+	}
+	if(compteur>nbVillesMaxParNOmEvt) {
+		result+="et quelques autres...";
+	}
+	
+	
+	return result;
 }
 	
 	
