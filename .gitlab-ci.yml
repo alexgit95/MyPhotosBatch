@@ -1,0 +1,9 @@
+image: maven:3.6-jdk-8-slim
+
+stages:
+  - test
+
+
+build:
+  stage: test
+  script: mvn test
