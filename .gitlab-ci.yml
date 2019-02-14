@@ -1,9 +1,17 @@
 image: maven:3.6-jdk-8-slim
 
 stages:
-  - test
+#  - test
+  - package
 
+#build:
+#  stage: test
+#  script: mvn test
 
-build:
-  stage: test
-  script: mvn test
+package :
+  stage : package
+  script: mvn package
+  artifacts:
+    paths:
+      - target/batchPhoto-0.0.1-SNAPSHOT.jar
+
