@@ -19,8 +19,6 @@ public class PhotosBuilder {
 	private int minute;
 	private int secondes;
 	private int heure;
-	
-	private boolean isScanEvenement;
 
 	public Photos build() {
 		//return new Photos(nom, chemin, longitude, lattitude, datePriseVue, dateAjout, estFavoris, annee, mois, jour, minute, secondes, heure);

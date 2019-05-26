@@ -13,6 +13,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import main.java.com.alex.batch.batchPhoto.model.ReponseGeocoding;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.http.HttpResponse;
@@ -33,9 +35,6 @@ import com.drew.lang.GeoLocation;
 import com.drew.metadata.Metadata;
 import com.drew.metadata.exif.GpsDirectory;
 import com.google.gson.Gson;
-import com.sun.org.apache.bcel.internal.generic.NEW;
-
-import main.java.com.alex.batch.batchPhoto.model.ReponseGeocoding;
 
 @SpringBootApplication
 public class Application implements CommandLineRunner {
@@ -54,7 +53,6 @@ public class Application implements CommandLineRunner {
 	public static final int nbVillesMaxParNOmEvt=5;
 		
 	public static final SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-	public static final SimpleDateFormat sdfBackup = new SimpleDateFormat("yyyyMMddhhmm");
 
 	public static void main(String[] args) {
 		SpringApplication.run(Application.class, args);
@@ -63,22 +61,6 @@ public class Application implements CommandLineRunner {
 
 	@Override
 	public void run(String... args) throws Exception {
-		
-		
-		System.out.println("Demarrage du backup");
-		Gson gson = new Gson();
-		List<Photos> allPhotosToBackup = repository.findAll();
-		List<Evenements> allEvtsToBackup = repositoryEvenements.findAll();
-		File repoBackup = new File("/home/pi/apps");
-		String suffix = sdfBackup.format(new Date());
-		try{
-			FileUtils.write(new File(repoBackup,"photos"+suffix+".json"), gson.toJson(allPhotosToBackup));
-			FileUtils.write(new File(repoBackup,"evenements-photos"+suffix+".json"), gson.toJson(allEvtsToBackup));
-			notificationBackupOk();
-		}catch(Exception e) {
-			notificationBackupKO();
-		}
-		System.out.println("Fin du backup");
 		
 		System.out.println("--------Compte Rendu avant traitements---------");
 		List<Photos> findPhotosWithGeoCoding = repositoryCustom.findPhotosWithGeoCoding();
@@ -91,14 +73,14 @@ public class Application implements CommandLineRunner {
 		
 		System.out.println("-----------------------------------------------");
 		System.out.println("----------Ajout des nouveaux elements----------");
-		List<File> allFichiers = chargerFichiers("/media/Images/DATA/Images");
-		System.out.println("---------------Dï¿½but du filtrage----------------");
+		List<File> allFichiers = chargerFichiers("Y:\\Images");
+		System.out.println("---------------Début du filtage----------------");
 		List<File> fileFiltered=filterFichierDejaPresent(allFichiers);
 		notificationNouvellesPhotos(fileFiltered.size());
 		System.out.println("----------------Fin du filtage-----------------");
-		System.out.println("-----Dï¿½but de la rï¿½cuperation des infos--------");
+		System.out.println("-----Début de la récuperation des infos--------");
 		List<Photos> recuperationInfoComplementaire = recuperationInfoComplementaire(fileFiltered);
-		System.out.println("-------Fin de la rï¿½cuperation des infos--------");
+		System.out.println("-------Fin de la récuperation des infos--------");
 		sauvegardePhotosdansBDD(recuperationInfoComplementaire);
 		System.out.println("-----------Sauvegarde effectuee----------------");
 		System.out.println("------Completion des elements de geocodage-----");
@@ -124,7 +106,7 @@ public class Application implements CommandLineRunner {
 		System.out.println("--FIN Recherche des infos de geolocalisation ---");
 		repository.saveAll(fillGeolocation);
 		System.out.println("-----------Sauvegarde effectuee------------------");
-		System.out.println("--------Compte Rendu aprï¿½s traitements---------");
+		System.out.println("--------Compte Rendu après traitements---------");
 		findPhotosWithGeoCoding = repositoryCustom.findPhotosWithGeoCoding();
 		findPhotosWithNoGeocoding = repositoryCustom.findPhotosWithNoGeocoding();
 		findPhotosWithNoGeolocalisation = repositoryCustom.findPhotosWithNoGeolocalisation();
@@ -198,10 +180,10 @@ public class Application implements CommandLineRunner {
 				//System.out.println("On ajoute "+file.getName());
 				result.add(file);
 			}else {
-				//System.out.println("Deja prï¿½sent on ne l'ajoute pas");
+				//System.out.println("Deja présent on ne l'ajoute pas");
 			}
 		}
-		System.out.println("NB elements ï¿½ traiter : "+result.size());
+		System.out.println("NB elements à traiter : "+result.size());
 		return result;
 	}
 	
@@ -258,9 +240,8 @@ public class Application implements CommandLineRunner {
 					}
 				}
 				
-				Photos build = pb.build();
-				build.isScanEvenement=false;
-				result.add(build);
+				
+				result.add(pb.build());
 				
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -345,7 +326,7 @@ public class Application implements CommandLineRunner {
 			// On regarde si on a l'info en bdd
 			Photos nearestPhotoWithGeocoding = repositoryCustom.getNearestPhotoWithGeocoding(photos, 180);
 			if (nearestPhotoWithGeocoding != null) {
-				System.out.println("L'information a ï¿½tï¿½ trouvï¿½e en base " + nearestPhotoWithGeocoding);
+				System.out.println("L'information a été trouvée en base " + nearestPhotoWithGeocoding);
 				photos.pays = nearestPhotoWithGeocoding.pays;
 				photos.ville = nearestPhotoWithGeocoding.ville;
 				photos.region = nearestPhotoWithGeocoding.region;
@@ -390,9 +371,9 @@ public class Application implements CommandLineRunner {
 					e.printStackTrace();
 				}
 			}
-			if(i%200==0){
+			if(i%100==0){
 				repository.saveAll(result);
-				System.out.println("Sauvegarde partielle effectuï¿½e");
+				System.out.println("Sauvegarde partielle effectuée");
 			}
 		}
 
@@ -416,20 +397,6 @@ public class Application implements CommandLineRunner {
 	  private void notificationNouvellesPhotos(int nbNouvellesPhotos) throws UnsupportedEncodingException, IOException, ClientProtocolException {
           CloseableHttpClient httpclient = HttpClients.createDefault();
           final String url="https://maker.ifttt.com/trigger/nouvelles_photos/with/key/"+getApiKeyIFTTT()+"?value1="+nbNouvellesPhotos;
-          HttpPost httpPost = new HttpPost(url);
-          httpclient.execute(httpPost);
-    }
-	  
-	  private void notificationBackupOk() throws UnsupportedEncodingException, IOException, ClientProtocolException {
-          CloseableHttpClient httpclient = HttpClients.createDefault();
-          final String url="https://maker.ifttt.com/trigger/backup_photo_ok/with/key/"+getApiKeyIFTTT();
-          HttpPost httpPost = new HttpPost(url);
-          httpclient.execute(httpPost);
-    }
-	  
-	  private void notificationBackupKO() throws UnsupportedEncodingException, IOException, ClientProtocolException {
-          CloseableHttpClient httpclient = HttpClients.createDefault();
-          final String url="https://maker.ifttt.com/trigger/backup_photo_ko/with/key/"+getApiKeyIFTTT();
           HttpPost httpPost = new HttpPost(url);
           httpclient.execute(httpPost);
     }
@@ -459,9 +426,6 @@ public void gestionEvenements2(String... args) throws Exception {
 		}
 		if(allPhotos.get(i).evt!=null){
 			//System.out.println(allPhotos.get(i).chemin+" a deja un evt, RAS");
-			continue;
-		}
-		if(allPhotos.get(i).isScanEvenement) {
 			continue;
 		}
 		
@@ -524,10 +488,10 @@ public void gestionEvenements2(String... args) throws Exception {
 			//On part sur des vacances
 			List<Photos> findPhotosByEvenements = repositoryCustom.findPhotosByEvenements(allEvts.get(i));
 			if("France".equalsIgnoreCase(findPhotosByEvenements.get(10).pays)) {
-				allEvts.get(i).nom="Vacances ï¿½ "+gestionVille(findPhotosByEvenements)+" du "+sdf.format(allEvts.get(i).debut)+" au "+sdf.format(allEvts.get(i).fin);
+				allEvts.get(i).nom="Vacances à "+gestionVille(findPhotosByEvenements)+" du "+sdf.format(allEvts.get(i).debut)+" au "+sdf.format(allEvts.get(i).fin);
 			
 			}else{
-				allEvts.get(i).nom="Vacances ï¿½ "+findPhotosByEvenements.get(10).region+", "+findPhotosByEvenements.get(10).pays+" du "+sdf.format(allEvts.get(i).debut)+" au "+sdf.format(allEvts.get(i).fin);
+				allEvts.get(i).nom="Vacances à "+findPhotosByEvenements.get(10).region+", "+findPhotosByEvenements.get(10).pays+" du "+sdf.format(allEvts.get(i).debut)+" au "+sdf.format(allEvts.get(i).fin);
 			}
 			System.out.println(allEvts.get(i).nom);
 			continue;
@@ -545,9 +509,9 @@ public void gestionEvenements2(String... args) throws Exception {
 			if(tempcal.get(Calendar.DAY_OF_WEEK)==Calendar.SUNDAY||tempcal.get(Calendar.DAY_OF_WEEK)==Calendar.SATURDAY) {
 				List<Photos> findPhotosByEvenements = repositoryCustom.findPhotosByEvenements(allEvts.get(i));
 				if("France".equalsIgnoreCase(findPhotosByEvenements.get(18).pays)) {
-					allEvts.get(i).nom="Week end ï¿½ "+gestionVille(findPhotosByEvenements)+" du "+sdf.format(allEvts.get(i).debut)+" au "+sdf.format(allEvts.get(i).fin);
+					allEvts.get(i).nom="Week end à "+gestionVille(findPhotosByEvenements)+" du "+sdf.format(allEvts.get(i).debut)+" au "+sdf.format(allEvts.get(i).fin);
 				}else {
-					allEvts.get(i).nom="Week end ï¿½ "+gestionVille(findPhotosByEvenements)+", "+findPhotosByEvenements.get(18).pays+" du "+sdf.format(allEvts.get(i).debut)+" au "+sdf.format(allEvts.get(i).fin);
+					allEvts.get(i).nom="Week end à "+gestionVille(findPhotosByEvenements)+", "+findPhotosByEvenements.get(18).pays+" du "+sdf.format(allEvts.get(i).debut)+" au "+sdf.format(allEvts.get(i).fin);
 				}
 				System.out.println(allEvts.get(i).nom);
 				continue;
@@ -555,7 +519,7 @@ public void gestionEvenements2(String... args) throws Exception {
 			}
 			//Sinon quelques jours
 			List<Photos> findPhotosByEvenements = repositoryCustom.findPhotosByEvenements(allEvts.get(i));
-			allEvts.get(i).nom="Quelques jours ï¿½ "+gestionVille(findPhotosByEvenements)+" du "+sdf.format(allEvts.get(i).debut)+" au "+sdf.format(allEvts.get(i).fin);
+			allEvts.get(i).nom="Quelques jours à "+gestionVille(findPhotosByEvenements)+" du "+sdf.format(allEvts.get(i).debut)+" au "+sdf.format(allEvts.get(i).fin);
 			System.out.println(allEvts.get(i).nom);
 			continue;
 		}
@@ -564,23 +528,15 @@ public void gestionEvenements2(String... args) throws Exception {
 		//C'est peu de temps
 		List<Photos> findPhotosByEvenements = repositoryCustom.findPhotosByEvenements(allEvts.get(i));
 		if("France".equalsIgnoreCase(findPhotosByEvenements.get(18).pays)) {
-			allEvts.get(i).nom="Sortie ï¿½ "+gestionVille(findPhotosByEvenements)+" le "+sdf.format(allEvts.get(i).debut);
+			allEvts.get(i).nom="Sortie à "+gestionVille(findPhotosByEvenements)+" le "+sdf.format(allEvts.get(i).debut);
 		}else {
-			allEvts.get(i).nom="Sortie ï¿½ "+gestionVille(findPhotosByEvenements)+", "+findPhotosByEvenements.get(18).pays+" le "+sdf.format(allEvts.get(i).debut);
+			allEvts.get(i).nom="Sortie à "+gestionVille(findPhotosByEvenements)+", "+findPhotosByEvenements.get(18).pays+" le "+sdf.format(allEvts.get(i).debut);
 		}
 		System.out.println(allEvts.get(i).nom);
 		
 	}
 	repositoryEvenements.saveAll(allEvts);
 	
-	
-	//on passe le scan a true
-	List<Photos> findAll = repository.findAll();
-	for (Photos photos : findAll) {
-		photos.isScanEvenement=true;
-	}
-	repository.saveAll(findAll);
-	//FIN
 }
 
 public String gestionVille(List<Photos> allPhotos) {
