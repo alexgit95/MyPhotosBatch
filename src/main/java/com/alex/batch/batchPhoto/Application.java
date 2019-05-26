@@ -49,6 +49,12 @@ public class Application implements CommandLineRunner {
 	private String CLE_IFTTT = "fl3k9za5qcs_mUfUPlMPXs9AO1bMLfKzB2hIlMDCA3A";
 	@Value("${backup.only}")
 	private boolean backupOnly;
+	@Value("${backup.activation}")
+	private boolean isBackupActivated;
+	@Value("${backup.restore.activation}")
+	private boolean restoreActivation;
+	@Value("${backup.restore.repertoire}")
+	private String restoreRepository;
 	
 	@Autowired
 	private PhotosRepository repository;
@@ -73,22 +79,27 @@ public class Application implements CommandLineRunner {
 
 	@Override
 	public void run(String... args) throws Exception {
-		
-		System.out.println("Demarrage du backup");
-		Gson gson = new Gson();
-		List<Photos> allPhotosToBackup = repository.findAll();
-		List<Evenements> allEvtsToBackup = repositoryEvenements.findAll();
-		File repoBackup = new File(REPETOIRE_BACKUP);
-		String suffix = sdfBackup.format(new Date());
-		try{
-			FileUtils.write(new File(repoBackup,"photos"+suffix+".json"), gson.toJson(allPhotosToBackup));
-			FileUtils.write(new File(repoBackup,"evenements-photos"+suffix+".json"), gson.toJson(allEvtsToBackup));
-			notificationBackupOk();
-		}catch(Exception e) {
-			notificationBackupKO();
+		if (isBackupActivated) {
+			System.out.println("Demarrage du backup");
+			Gson gson = new Gson();
+			List<Photos> allPhotosToBackup = repository.findAll();
+			List<Evenements> allEvtsToBackup = repositoryEvenements.findAll();
+			File repoBackup = new File(REPETOIRE_BACKUP);
+			String suffix = sdfBackup.format(new Date());
+			try {
+				FileUtils.write(new File(repoBackup, "photos" + suffix + ".json"), gson.toJson(allPhotosToBackup));
+				FileUtils.write(new File(repoBackup, "evenements-photos" + suffix + ".json"),
+						gson.toJson(allEvtsToBackup));
+				notificationBackupOk();
+			} catch (Exception e) {
+				notificationBackupKO();
+			}
+			System.out.println("Fin du backup");
 		}
-		System.out.println("Fin du backup");
-	
+		if(restoreActivation) {
+			//TODO Implementer la restauration
+		}
+		
 		if(backupOnly) {
 			return;
 		}
