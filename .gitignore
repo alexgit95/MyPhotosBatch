@@ -1,3 +1,4 @@
 /bin/
 target/
 src/main/resources/applicationValo.properties 
+src/main/resources/applicationProd.properties

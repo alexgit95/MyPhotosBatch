@@ -24,6 +24,7 @@ import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -33,13 +34,22 @@ import com.drew.lang.GeoLocation;
 import com.drew.metadata.Metadata;
 import com.drew.metadata.exif.GpsDirectory;
 import com.google.gson.Gson;
-import com.sun.org.apache.bcel.internal.generic.NEW;
 
 import main.java.com.alex.batch.batchPhoto.model.ReponseGeocoding;
 
 @SpringBootApplication
 public class Application implements CommandLineRunner {
 
+	
+	@Value("${analyse.repertoireRacine}")
+	private String RACINE_ANALYSE = "/media/Images/DATA/Images";
+	@Value("${backup.emplacement.sauvegarde}")
+	private String REPETOIRE_BACKUP = "/home/pi/apps";
+	@Value("${ifttt.cle}")
+	private String CLE_IFTTT = "fl3k9za5qcs_mUfUPlMPXs9AO1bMLfKzB2hIlMDCA3A";
+	@Value("${backup.only}")
+	private boolean backupOnly;
+	
 	@Autowired
 	private PhotosRepository repository;
 	@Autowired
@@ -64,12 +74,11 @@ public class Application implements CommandLineRunner {
 	@Override
 	public void run(String... args) throws Exception {
 		
-		
 		System.out.println("Demarrage du backup");
 		Gson gson = new Gson();
 		List<Photos> allPhotosToBackup = repository.findAll();
 		List<Evenements> allEvtsToBackup = repositoryEvenements.findAll();
-		File repoBackup = new File("/home/pi/apps");
+		File repoBackup = new File(REPETOIRE_BACKUP);
 		String suffix = sdfBackup.format(new Date());
 		try{
 			FileUtils.write(new File(repoBackup,"photos"+suffix+".json"), gson.toJson(allPhotosToBackup));
@@ -79,6 +88,11 @@ public class Application implements CommandLineRunner {
 			notificationBackupKO();
 		}
 		System.out.println("Fin du backup");
+	
+		if(backupOnly) {
+			return;
+		}
+		
 		
 		System.out.println("--------Compte Rendu avant traitements---------");
 		List<Photos> findPhotosWithGeoCoding = repositoryCustom.findPhotosWithGeoCoding();
@@ -91,7 +105,7 @@ public class Application implements CommandLineRunner {
 		
 		System.out.println("-----------------------------------------------");
 		System.out.println("----------Ajout des nouveaux elements----------");
-		List<File> allFichiers = chargerFichiers("/media/Images/DATA/Images");
+		List<File> allFichiers = chargerFichiers(RACINE_ANALYSE);
 		System.out.println("---------------D�but du filtrage----------------");
 		List<File> fileFiltered=filterFichierDejaPresent(allFichiers);
 		notificationNouvellesPhotos(fileFiltered.size());
@@ -136,20 +150,6 @@ public class Application implements CommandLineRunner {
 		
 		
 		
-		//PARTIE EVENEMENTS
-		
-		
-		
-		 //RAZ EVT
-		/*
-		List<Photos> findAll = repository.findAll();
-		for(int i=0;i<findAll.size();i++){
-			findAll.get(i).evt=null;
-		}
-		repository.saveAll(findAll);
-		
-		repositoryEvenements.deleteAll();
-		*/
 		gestionEvenements2(args);
 		
 	}
@@ -433,6 +433,13 @@ public class Application implements CommandLineRunner {
           HttpPost httpPost = new HttpPost(url);
           httpclient.execute(httpPost);
     }
+	  
+	  private void notificationRobotTermine() throws UnsupportedEncodingException, IOException, ClientProtocolException {
+          CloseableHttpClient httpclient = HttpClients.createDefault();
+          final String url="https://maker.ifttt.com/trigger/analyse_photo_ok/with/key/"+getApiKeyIFTTT();
+          HttpPost httpPost = new HttpPost(url);
+          httpclient.execute(httpPost);
+    }
 
    
 
@@ -445,7 +452,7 @@ public class Application implements CommandLineRunner {
 
 
 public String getApiKeyIFTTT() {
-        return "fl3k9za5qcs_mUfUPlMPXs9AO1bMLfKzB2hIlMDCA3A";
+        return CLE_IFTTT;
 }
 
 public void gestionEvenements2(String... args) throws Exception {
@@ -580,6 +587,8 @@ public void gestionEvenements2(String... args) throws Exception {
 		photos.isScanEvenement=true;
 	}
 	repository.saveAll(findAll);
+	
+	notificationRobotTermine();
 	//FIN
 }
 
