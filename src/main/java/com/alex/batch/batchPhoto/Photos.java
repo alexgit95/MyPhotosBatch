@@ -26,6 +26,8 @@ public class Photos {
 	  public int heure;
 	  public Evenements evt;
 	  
+	  public boolean isScanEvenement;
+	  
 	  
 	  public Photos() {}
 
@@ -93,13 +95,41 @@ public class Photos {
 		this.heure = heure;
 	}
 
+	public Photos(String id, String nom, String chemin, double longitude, double lattitude, Date datePriseVue,
+			Date dateAjout, boolean estFavoris, String ville, String region, String pays, int annee, int mois, int jour,
+			int minute, int secondes, int heure, Evenements evt, boolean isScanEvenement) {
+		super();
+		this.id = id;
+		this.nom = nom;
+		this.chemin = chemin;
+		this.longitude = longitude;
+		this.lattitude = lattitude;
+		this.datePriseVue = datePriseVue;
+		this.dateAjout = dateAjout;
+		this.estFavoris = estFavoris;
+		this.ville = ville;
+		this.region = region;
+		this.pays = pays;
+		this.annee = annee;
+		this.mois = mois;
+		this.jour = jour;
+		this.minute = minute;
+		this.secondes = secondes;
+		this.heure = heure;
+		this.evt = evt;
+		this.isScanEvenement = isScanEvenement;
+	}
+
 	@Override
 	public String toString() {
-		return "Photos [nom=" + nom + ", chemin=" + chemin + ", longitude=" + longitude + ", lattitude=" + lattitude
-				+ ", datePriseVue=" + datePriseVue + ", dateAjout=" + dateAjout + ", estFavoris=" + estFavoris
-				+ ", ville=" + ville + ", region=" + region + ", pays=" + pays + ", annee=" + annee + ", mois=" + mois
-				+ ", jour=" + jour + ", minute=" + minute + ", secondes=" + secondes + ", heure=" + heure + "]";
+		return "Photos [id=" + id + ", nom=" + nom + ", chemin=" + chemin + ", longitude=" + longitude + ", lattitude="
+				+ lattitude + ", datePriseVue=" + datePriseVue + ", dateAjout=" + dateAjout + ", estFavoris="
+				+ estFavoris + ", ville=" + ville + ", region=" + region + ", pays=" + pays + ", annee=" + annee
+				+ ", mois=" + mois + ", jour=" + jour + ", minute=" + minute + ", secondes=" + secondes + ", heure="
+				+ heure + ", evt=" + evt + ", isScanEvenement=" + isScanEvenement + "]";
 	}
+
+	
 	
 	
 	
