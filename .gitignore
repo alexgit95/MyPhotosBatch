@@ -1,1 +1,3 @@
 /bin/
+target/
+src/main/resources/applicationValo.properties 
