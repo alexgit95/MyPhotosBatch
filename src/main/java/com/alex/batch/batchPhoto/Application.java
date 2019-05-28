@@ -41,7 +41,8 @@ import main.java.com.alex.batch.batchPhoto.model.ReponseGeocoding;
 @SpringBootApplication
 public class Application implements CommandLineRunner {
 
-	
+	@Value("${locationiq.cle}")
+	private String CLE_LOCATIONIQ;
 	@Value("${analyse.repertoireRacine}")
 	private String RACINE_ANALYSE;
 	@Value("${backup.emplacement.sauvegarde}")
@@ -413,7 +414,7 @@ public class Application implements CommandLineRunner {
 	
 	
 	public String getApiKey(){
-		return "9b2d715df5569e";
+		return CLE_LOCATIONIQ;
 	}
 	
 	
