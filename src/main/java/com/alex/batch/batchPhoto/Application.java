@@ -3,6 +3,7 @@ package main.java.com.alex.batch.batchPhoto;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Type;
 import java.nio.charset.Charset;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -35,6 +36,8 @@ import com.drew.lang.GeoLocation;
 import com.drew.metadata.Metadata;
 import com.drew.metadata.exif.GpsDirectory;
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
 
 import main.java.com.alex.batch.batchPhoto.model.ReponseGeocoding;
 
@@ -82,24 +85,11 @@ public class Application implements CommandLineRunner {
 	@Override
 	public void run(String... args) throws Exception {
 		if (isBackupActivated) {
-			System.out.println("Demarrage du backup");
-			Gson gson = new Gson();
-			List<Photos> allPhotosToBackup = repository.findAll();
-			List<Evenements> allEvtsToBackup = repositoryEvenements.findAll();
-			File repoBackup = new File(REPETOIRE_BACKUP);
-			String suffix = sdfBackup.format(new Date());
-			try {
-				FileUtils.write(new File(repoBackup, "photos" + suffix + ".json"), gson.toJson(allPhotosToBackup),Charset.forName("UTF-8"));
-				FileUtils.write(new File(repoBackup, "evenements-photos" + suffix + ".json"),
-						gson.toJson(allEvtsToBackup),Charset.forName("UTF-8"));
-				notificationBackupOk();
-			} catch (Exception e) {
-				notificationBackupKO();
-			}
-			System.out.println("Fin du backup");
+			backupAll();
 		}
 		if(restoreActivation) {
-			//TODO Implementer la restauration
+			restauration();
+			return;
 		}
 		
 		if(backupOnly) {
@@ -165,6 +155,24 @@ public class Application implements CommandLineRunner {
 		
 		gestionEvenements2(args);
 		
+	}
+
+	private void backupAll() throws UnsupportedEncodingException, IOException, ClientProtocolException {
+		System.out.println("Demarrage du backup");
+		Gson gson = new Gson();
+		List<Photos> allPhotosToBackup = repository.findAll();
+		List<Evenements> allEvtsToBackup = repositoryEvenements.findAll();
+		File repoBackup = new File(REPETOIRE_BACKUP);
+		String suffix = sdfBackup.format(new Date());
+		try {
+			FileUtils.write(new File(repoBackup, "photos" + suffix + ".json"), gson.toJson(allPhotosToBackup),Charset.forName("UTF-8"));
+			FileUtils.write(new File(repoBackup, "evenements-photos" + suffix + ".json"),
+					gson.toJson(allEvtsToBackup),Charset.forName("UTF-8"));
+			notificationBackupOk();
+		} catch (Exception e) {
+			notificationBackupKO();
+		}
+		System.out.println("Fin du backup");
 	}
 	
 	
@@ -626,6 +634,128 @@ public String gestionVille(List<Photos> allPhotos) {
 	
 	
 	return result;
+}
+
+private void restauration() throws JsonSyntaxException, IOException {
+
+	Collection<File> fichiersBachupPhotos = FileUtils.listFiles(new File(restoreRepository), new IOFileFilter() {
+		
+		@Override
+		public boolean accept(File arg0, String arg1) {
+			return arg0.getName().startsWith("photos")&&arg0.getName().endsWith("json");
+		}
+		
+		@Override
+		public boolean accept(File arg0) {
+			
+			return arg0.getName().startsWith("photos")&&arg0.getName().endsWith("json");
+			
+		}
+	}, new IOFileFilter() {
+		
+		@Override
+		public boolean accept(File arg0, String arg1) {
+			return arg0.getName().startsWith("photos")&&arg0.getName().endsWith("json");
+			
+		}
+		
+		@Override
+		public boolean accept(File arg0) {
+			return arg0.getName().startsWith("photos")&&arg0.getName().endsWith("json");
+			
+		}
+	});
+	if(fichiersBachupPhotos.size()==0) {
+		System.out.println("Pas de fichiers de backup photos dans "+restoreRepository);
+		return;
+	}
+	
+	if(fichiersBachupPhotos.size()>1) {
+		System.out.println("Trop de fichiers backup dans"+restoreRepository);
+		System.out.println(fichiersBachupPhotos);
+		return;
+	}
+	
+	
+	backupAll();
+	
+	Gson gson = new Gson();
+	
+	Type listPhotosType = new TypeToken<ArrayList<Photos>>(){}.getType();
+	List<Photos> fromJson = gson.fromJson(FileUtils.readFileToString((File)fichiersBachupPhotos.toArray()[0], Charset.forName("UTF-8")), listPhotosType);
+	
+	System.out.println("Suppression...");
+	repository.deleteAll();
+	System.out.println("Fin de la suppression des photos");
+	System.out.println("Suppression des evenements...");
+	repositoryEvenements.deleteAll();
+	System.out.println("Fin de la suppression des evenements");
+	
+	for(int i=0;i<fromJson.size();i++) {
+		repository.save(fromJson.get(i));
+		if(i%100==0) {
+			System.out.println("Restauration "+i+"/"+fromJson.size());
+		}
+	}
+	
+	System.out.println("Fin de la restauration des photos");
+	
+	System.out.println("Fin de la restauration des evenements");
+	
+	
+	Collection<File> fichiersBachupEvts = FileUtils.listFiles(new File(restoreRepository), new IOFileFilter() {
+		
+		@Override
+		public boolean accept(File arg0, String arg1) {
+			return arg0.getName().startsWith("evenements")&&arg0.getName().endsWith("json");
+		}
+		
+		@Override
+		public boolean accept(File arg0) {
+			
+			return arg0.getName().startsWith("evenements")&&arg0.getName().endsWith("json");
+			
+		}
+	}, new IOFileFilter() {
+		
+		@Override
+		public boolean accept(File arg0, String arg1) {
+			return arg0.getName().startsWith("evenements")&&arg0.getName().endsWith("json");
+			
+		}
+		
+		@Override
+		public boolean accept(File arg0) {
+			return arg0.getName().startsWith("evenements")&&arg0.getName().endsWith("json");
+			
+		}
+	});
+	if(fichiersBachupPhotos.size()==0) {
+		System.out.println("Pas de fichiers de backup evenements dans "+restoreRepository);
+		return;
+	}
+	
+	if(fichiersBachupPhotos.size()>1) {
+		System.out.println("Trop de fichiers backup dans"+restoreRepository);
+		System.out.println(fichiersBachupPhotos);
+		return;
+	}
+	
+	Type listEvenementsType = new TypeToken<ArrayList<Evenements>>(){}.getType();
+	List<Evenements> evtsFromJson = gson.fromJson(FileUtils.readFileToString((File)fichiersBachupPhotos.toArray()[0], Charset.forName("UTF-8")), listEvenementsType);
+	
+	System.out.println("Restauration des evenements");
+	for(int i=0;i<evtsFromJson.size();i++) {
+		repositoryEvenements.save(evtsFromJson.get(i));
+		if(i%100==0) {
+			System.out.println("Restauration "+i+"/"+evtsFromJson.size());
+		}
+	}
+	
+	System.out.println("Fin de la restauration des evenements");
+	
+	System.out.println("Fin de la restauration.");
+	
 }
 	
 	
