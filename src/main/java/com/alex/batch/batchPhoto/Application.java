@@ -89,7 +89,7 @@ public class Application implements CommandLineRunner {
 
 	@Override
 	public void run(String... args) throws Exception {
-		/*
+		
 		if (isBackupActivated) {
 			backupAll();
 		}
@@ -160,7 +160,7 @@ public class Application implements CommandLineRunner {
 		
 		
 		gestionEvenements2(args);
-		*/
+		
 		gestionRepertoire();
 		
 		notificationRobotTermine();
