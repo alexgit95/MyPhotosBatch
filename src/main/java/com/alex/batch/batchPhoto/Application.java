@@ -489,12 +489,13 @@ public String getApiKeyIFTTT() {
 
 public void gestionRepertoire() {
 	System.out.println("Debut du traitement des repertoires...");
-	List<Photos> allPhotos = repositoryCustom.findAllOrderByDate();
+	List<File> allFichiers = chargerFichiers(RACINE_ANALYSE);
 	List<Repertoire> allRepos = new ArrayList<Repertoire>();
-	for (int i = 0; i < allPhotos.size(); i++) {
-		allRepos.addAll(getAllParents(allPhotos.get(i).chemin));
+	for (int i = 0; i < allFichiers.size(); i++) {
+		
+		allRepos.addAll(getAllParents(allFichiers.get(i).getAbsolutePath()));
 		if(i%1000==0) {
-			System.out.println("Recuperation des parents "+i+"/"+allPhotos.size());
+			System.out.println("Recuperation des parents "+i+"/"+allFichiers.size());
 		}
 	}
 	

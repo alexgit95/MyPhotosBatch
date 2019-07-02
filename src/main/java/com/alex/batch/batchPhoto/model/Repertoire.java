@@ -52,6 +52,12 @@ public class Repertoire {
 			return false;
 		return true;
 	}
+	@Override
+	public String toString() {
+		return "Repertoire [chemin=" + chemin + ", isRacine=" + isRacine + "]";
+	}
+	
+	
 	
 	
 	
