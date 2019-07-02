@@ -13,7 +13,9 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
@@ -39,6 +41,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
+import main.java.com.alex.batch.batchPhoto.model.Repertoire;
 import main.java.com.alex.batch.batchPhoto.model.ReponseGeocoding;
 
 @SpringBootApplication
@@ -64,6 +67,8 @@ public class Application implements CommandLineRunner {
 	@Autowired
 	private PhotosRepository repository;
 	@Autowired
+	private RepertoireRepository repositoryRepertoire;
+	@Autowired
 	private PhotosRepositoryCustom repositoryCustom;
 	@Autowired
 	private EvenementsRepository repositoryEvenements;
@@ -84,6 +89,7 @@ public class Application implements CommandLineRunner {
 
 	@Override
 	public void run(String... args) throws Exception {
+		/*
 		if (isBackupActivated) {
 			backupAll();
 		}
@@ -154,6 +160,10 @@ public class Application implements CommandLineRunner {
 		
 		
 		gestionEvenements2(args);
+		*/
+		gestionRepertoire();
+		
+		notificationRobotTermine();
 		
 	}
 
@@ -476,6 +486,53 @@ public String getApiKeyIFTTT() {
         return CLE_IFTTT;
 }
 
+
+public void gestionRepertoire() {
+	System.out.println("Debut du traitement des repertoires...");
+	List<Photos> allPhotos = repositoryCustom.findAllOrderByDate();
+	List<Repertoire> allRepos = new ArrayList<Repertoire>();
+	for (int i = 0; i < allPhotos.size(); i++) {
+		allRepos.addAll(getAllParents(allPhotos.get(i).chemin));
+		if(i%1000==0) {
+			System.out.println("Recuperation des parents "+i+"/"+allPhotos.size());
+		}
+	}
+	
+	System.out.println("Sauvegarde des repertoires...");
+	List<Repertoire> collect = allRepos.stream().filter(Objects::nonNull).distinct().collect(Collectors.toList());
+	repositoryRepertoire.deleteAll();
+	
+	for(int i=0;i<collect.size();i++) {
+		repositoryRepertoire.save(collect.get(i));
+		if(i%5==0) {
+			System.out.println("Sauvegarde des repertoires "+i+"/"+collect.size());
+		}
+	}
+	
+}
+
+	public List<Repertoire> getAllParents(String chemin) {
+		List<Repertoire> result = new ArrayList<>();
+		final String cheminRacine = RACINE_ANALYSE;
+		//System.out.println("chemin racine :"+cheminRacine);
+		if (!chemin.startsWith(cheminRacine)) {
+			return null;
+		}
+		chemin = chemin.substring(cheminRacine.length()+1);
+		String[] split = chemin.split("/");
+		String cheminCourant = cheminRacine;
+		for (int i = 0; i < split.length - 1; i++) {
+			cheminCourant = cheminCourant + "/" + split[i];
+			if (i == 0) {
+				result.add(new Repertoire(cheminCourant, true));
+			} else {
+				result.add(new Repertoire(cheminCourant, false));
+			}
+		}
+
+		return result;
+	} 
+
 public void gestionEvenements2(String... args) throws Exception {
 	System.out.println("Recherche de toutes les photos, triees par date de prise de vue");
 	List<Photos> allPhotos = repositoryCustom.findAllOrderByDate();
@@ -609,7 +666,7 @@ public void gestionEvenements2(String... args) throws Exception {
 	}
 	repository.saveAll(findAll);
 	
-	notificationRobotTermine();
+	
 	//FIN
 }
 
@@ -742,7 +799,7 @@ private void restauration() throws JsonSyntaxException, IOException {
 	}
 	
 	Type listEvenementsType = new TypeToken<ArrayList<Evenements>>(){}.getType();
-	List<Evenements> evtsFromJson = gson.fromJson(FileUtils.readFileToString((File)fichiersBachupPhotos.toArray()[0], Charset.forName("UTF-8")), listEvenementsType);
+	List<Evenements> evtsFromJson = gson.fromJson(FileUtils.readFileToString((File)fichiersBachupEvts.toArray()[0], Charset.forName("UTF-8")), listEvenementsType);
 	
 	System.out.println("Restauration des evenements");
 	for(int i=0;i<evtsFromJson.size();i++) {
