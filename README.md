@@ -75,3 +75,12 @@ spring.data.mongodb.database=test
  - datePriseVue
  - nom
  
+ 
+ ## Lancer le robot
+ 
+```
+  
+java -Xmx1024m -jar batchPhoto-0.0.1-SNAPSHOT.jar --spring.config.location=file:chemin/fichier/properties.properties
+  
+```
+ 
