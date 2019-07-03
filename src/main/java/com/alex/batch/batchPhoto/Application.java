@@ -18,7 +18,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.apache.commons.io.filefilter.IOFileFilter;
+import org.apache.commons.io.filefilter.NotFileFilter;
+import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.ResponseHandler;
@@ -489,18 +492,20 @@ public String getApiKeyIFTTT() {
 
 public void gestionRepertoire() {
 	System.out.println("Debut du traitement des repertoires...");
-	List<File> allFichiers = chargerFichiers(RACINE_ANALYSE);
-	List<Repertoire> allRepos = new ArrayList<Repertoire>();
-	for (int i = 0; i < allFichiers.size(); i++) {
-		
-		allRepos.addAll(getAllParents(allFichiers.get(i).getAbsolutePath()));
-		if(i%1000==0) {
-			System.out.println("Recuperation des parents "+i+"/"+allFichiers.size());
+	File fichierRacine = new File(RACINE_ANALYSE);
+	Collection<File> listDirs = FileUtils.listFilesAndDirs(fichierRacine, new NotFileFilter(TrueFileFilter.INSTANCE), DirectoryFileFilter.DIRECTORY);
+	List<Repertoire> collect = new ArrayList<Repertoire>();
+	for (File file : listDirs) {
+		if(file.getAbsolutePath().equals(fichierRacine.getAbsolutePath())){
+			continue;
+		}
+		if(file.getParentFile().getAbsolutePath().equals(fichierRacine.getAbsolutePath())) {
+			collect.add(new Repertoire(file.getAbsolutePath(), true));
+		}else {
+			collect.add(new Repertoire(file.getAbsolutePath(), false));
 		}
 	}
 	
-	System.out.println("Sauvegarde des repertoires...");
-	List<Repertoire> collect = allRepos.stream().filter(Objects::nonNull).distinct().collect(Collectors.toList());
 	repositoryRepertoire.deleteAll();
 	
 	for(int i=0;i<collect.size();i++) {
